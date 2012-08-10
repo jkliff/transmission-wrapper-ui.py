@@ -39,8 +39,8 @@ Delete
 
 </form>
 
-
-
+<hr>
+<a href="/">Refresh</a>
 <hr>
 <pre>
 %(list)s
