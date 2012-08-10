@@ -109,11 +109,5 @@ class executor:
 
         return CMDS [cmd] ()
 
-
-class add:
-    def GET (self, torrent_url):
-        print torrent_url
-        # CMD transmission-remote --auth=transmission:transmission -a "param"
-
 if __name__ == '__main__':
     app.run()
