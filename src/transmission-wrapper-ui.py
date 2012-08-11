@@ -5,6 +5,9 @@ All commands are executed on a remote host through ssh (for proper functionality
 
 Configuration file format:
 (order of lines matters)
+
+TODO: implement http authentication.
+
 --
 user@host # to connect on remote host
 username/password #for web access
