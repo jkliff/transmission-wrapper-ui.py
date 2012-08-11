@@ -1,5 +1,8 @@
 #!env python
 """
+Simple web ui for transmission-remote.
+All commands are executed on a remote host through ssh (for proper functionality public ssh keys must be available on the remote host for the user who is running).
+
 Configuration file format:
 (order of lines matters)
 --
@@ -10,6 +13,7 @@ username/password #for web access
 """
 import web
 import subprocess
+import datetime
 
 TRANS = 'transmission-remote --auth=transmission:transmission'
 
@@ -20,7 +24,11 @@ urls = (
 TEMPLATE = """
 <html>
 
+<head><title>Torrents frontend</title></head>
+
 <body>
+
+<h1>Torrent management</h1>
 
 <form action="add">
 Add
@@ -49,13 +57,13 @@ Delete
 
 </form>
 
-<hr>
 <a href="/">Refresh</a>
 <hr>
 <pre>
 %(list)s
-
 </pre>
+<hr>
+at %(now)s
 </body>
 
 </html>
@@ -63,11 +71,10 @@ Delete
 """
 
 def render (status):
-    return TEMPLATE % {'list': status}
+    return TEMPLATE % {'list': status, 'now': datetime.datetime.now()}
 
 def transmission (cmd):
     cmd = '%s %s %s' % (web.ctx.HOST, web.ctx.TRANS, cmd)
-    print cmd
     return subprocess.check_output (cmd, shell=True)
 
 _ = lambda x: render (transmission(x))
@@ -78,12 +85,12 @@ def status ():
 def add ():
     url = web.input(url=None)['url']
     _ ('-a "%s"' % url)
-    return status ()
+    raise web.seeother('/')
 
 def remove():
     url = web.input(url=None)['idx']
     _ ('-t %s -r' % url)
-    return status ()
+    raise web.seeother('/')
 
 def start():
     url = web.input(url=None)['idx']
@@ -93,8 +100,7 @@ def start():
 def stop():
     url = web.input(url=None)['idx']
     _ ('-t %s -S' % url)
-    return status ()
-
+    raise web.seeother('/')
 
 CMDS = {
     'status':   status,
@@ -106,7 +112,6 @@ CMDS = {
 
 class executor:
     def GET (self, cmd):
-        print
         if cmd is None or cmd == '':
             cmd = 'status'
 
@@ -127,7 +132,6 @@ def gen_set_globals ():
 if __name__ == '__main__':
 
     global HOST
-
     import sys
 
     if len (sys.argv) != 3:
@@ -144,7 +148,6 @@ if __name__ == '__main__':
 
     HOST = 'ssh %s' % conn
 
-    web.ctx.HOST = HOST
     app = web.application (urls, globals())
     app.add_processor (gen_set_globals())
 
