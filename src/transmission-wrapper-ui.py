@@ -73,6 +73,19 @@ at %(now)s
 
 """
 
+def normalize_shell_command (s):
+
+    repl_rules = [
+        ('(', '\('),
+        (')', '\)')
+    ]
+
+    r = s
+    for repl in repl_rules:
+        r = r.replace(repl [0], repl [1])
+
+    return r
+
 def render (status):
     return TEMPLATE % {'list': status, 'now': datetime.datetime.now()}
 
@@ -87,7 +100,7 @@ def status ():
 
 def add ():
     url = web.input(url=None)['url']
-    _ ('-a "%s"' % url)
+    _ ('-a "%s"' % normalize_shell_command (url))
     raise web.seeother('/')
 
 def remove():
