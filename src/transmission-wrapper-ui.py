@@ -24,7 +24,7 @@ urls = (
     '/(.*)', 'executor',
 )
 
-TEMPLATE = """
+TEMPLATE = """<!doctype html>
 <html>
 
 <head><title>Torrents frontend</title></head>
@@ -134,6 +134,8 @@ class executor:
     def GET (self, cmd):
         if cmd is None or cmd == '':
             cmd = 'status'
+
+        web.header('Content-Type', 'text/html')
 
         if cmd not in CMDS:
             return 'wrong'
