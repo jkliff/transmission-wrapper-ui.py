@@ -93,6 +93,10 @@ def transmission (cmd):
     cmd = '%s %s %s' % (web.ctx.HOST, web.ctx.TRANS, cmd)
     return subprocess.check_output (cmd, shell=True)
 
+def e (c, url):
+    for u in url.split (','):
+        _ (c % u.strip())
+
 _ = lambda x: render (transmission(x))
 
 def status ():
@@ -105,17 +109,17 @@ def add ():
 
 def remove():
     url = web.input(url=None)['idx']
-    _ ('-t %s -r' % url)
+    e ('-t %s -r', url)
     raise web.seeother('/')
 
 def start():
     url = web.input(url=None)['idx']
-    _ ('-t %s -s' % url)
+    e ('-t %s -s', url)
     raise web.seeother('/')
 
 def stop():
     url = web.input(url=None)['idx']
-    _ ('-t %s -S' % url)
+    e ('-t %s -S', url)
     raise web.seeother('/')
 
 CMDS = {
