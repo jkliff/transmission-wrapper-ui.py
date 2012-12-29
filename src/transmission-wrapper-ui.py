@@ -17,6 +17,7 @@ username/password #for web access
 import web
 import subprocess
 import datetime
+import traceback
 
 TRANS = 'transmission-remote --auth=transmission:transmission'
 
@@ -98,7 +99,8 @@ def transmission (cmd):
     cmd = '%s %s %s' % (web.ctx.HOST, web.ctx.TRANS, cmd)
     try:
         return subprocess.check_output (cmd, shell=True)
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError:
+        traceback.print_exc()
         return 'Error executing command.'
 
 def e (c, url):
