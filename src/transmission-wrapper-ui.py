@@ -1,7 +1,8 @@
 #!env python
 """
 Simple web ui for transmission-remote.
-All commands are executed on a remote host through ssh (for proper functionality public ssh keys must be available on the remote host for the user who is running).
+All commands are executed on a remote host through ssh (for proper functionality public
+ssh keys must be available on the remote host for the user who is running).
 
 Configuration file format:
 (order of lines matters)
@@ -33,12 +34,14 @@ TEMPLATE = """<?xml version="1.0"?>
 
 <head>
 <title>Torrents frontend</title>
+<link rel="stylesheet" type="text/css" href="%(CSS_REF)s" media="screen" />
 </head>
 
 <body>
 
 <h1>Torrent management</h1>
 
+<div id="canvas">
 <form action="add">
 Add
 <input type="text" name="url">
@@ -66,13 +69,14 @@ Delete
 
 </form>
 
-<a href="/">Refresh</a>
+<a href="/" class="command">Refresh</a>
 <hr>
 <pre>
 %(list)s
 </pre>
 <hr>
 at %(now)s
+</div>
 </body>
 
 </html>
@@ -93,7 +97,7 @@ def normalize_shell_command (s):
     return r
 
 def render (status):
-    return TEMPLATE % {'list': status, 'now': datetime.datetime.now()}
+    return TEMPLATE % {'list': status, 'now': datetime.datetime.now(), 'CSS_REF': web.ctx.CSS_REF}
 
 def transmission (cmd):
     cmd = '%s %s %s' % (web.ctx.HOST, web.ctx.TRANS, cmd)
@@ -153,17 +157,24 @@ class executor:
         return CMDS [cmd] ()
 
 def gen_set_globals ():
-    """web.py is braindead^H^H^H^H^H^H so simple that makes it retardedly complex to pass simple local-file defined global variables to handlers. way to go for a web framework that has as greatest asset its simplicity, folks."""
+    """
+web.py is braindead^H^H^H^H^H^H so simple that makes it retardedly complex to pass simple
+local-file defined global variables to handlers. way to go for a web framework that has as
+greatest asset its simplicity, folks.
+
+"""
+
     def g (handler):
         web.ctx.HOST = HOST
         web.ctx.TRANS = TRANS
+        web.ctx.CSS_REF = external_css_ref
         return handler ()
 
     return g
 
 if __name__ == '__main__':
 
-    global HOST
+    global HOST, external_css_ref
     import sys
 
     if len (sys.argv) != 3:
@@ -177,6 +188,7 @@ if __name__ == '__main__':
         l = f.readlines()
         conn = l[0].strip()
         cred = tuple ([x.strip() for x in l[1].split ('/')])
+        external_css_ref = l[2].strip()
 
     HOST = 'ssh %s' % conn
 
