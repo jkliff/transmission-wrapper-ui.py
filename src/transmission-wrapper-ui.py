@@ -24,10 +24,15 @@ urls = (
     '/(.*)', 'executor',
 )
 
-TEMPLATE = """<!doctype html>
-<html>
+TEMPLATE = """<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
-<head><title>Torrents frontend</title></head>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>Torrents frontend</title>
+</head>
 
 <body>
 
@@ -91,7 +96,10 @@ def render (status):
 
 def transmission (cmd):
     cmd = '%s %s %s' % (web.ctx.HOST, web.ctx.TRANS, cmd)
-    return subprocess.check_output (cmd, shell=True)
+    try:
+        return subprocess.check_output (cmd, shell=True)
+    except subprocess.CalledProcessError, e:
+        return 'Error executing command.'
 
 def e (c, url):
     for u in url.split (','):
