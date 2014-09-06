@@ -108,7 +108,7 @@ def hide_lines_if_needed (raw_output):
 
     with (open (web.ctx.EXCLUSION_LIST_FILE)) as f:
         exclusions = f.readlines()
-        r = [re.compile ('.*%s.*' % i.strip()) for i in exclusions]
+        r = [re.compile ('.*%s.*' % i.strip()) for i in exclusions if i.strip() != '']
         raw = [l for l in raw_output.split ("\n")]
         return "\n".join ([raw[0]] + [l for l in raw [1:-1] if not any ([x.match (l) for x in r])] + [raw [-1]])
 
