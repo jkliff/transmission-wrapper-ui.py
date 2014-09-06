@@ -15,10 +15,13 @@ username/password #for web access
 --
 
 """
-import web
-import subprocess
 import datetime
+import os
+import re
+import subprocess
+import sys
 import traceback
+import web
 
 TRANS = 'transmission-remote --auth=transmission:transmission'
 
@@ -99,10 +102,20 @@ def normalize_shell_command (s):
 def render (status):
     return TEMPLATE % {'list': status, 'now': datetime.datetime.now(), 'CSS_REF': web.ctx.CSS_REF}
 
+def hide_lines_if_needed (raw_output):
+    if not os.path.exists (web.ctx.EXCLUSION_LIST_FILE):
+        return raw_output
+
+    with (open (web.ctx.EXCLUSION_LIST_FILE)) as f:
+        exclusions = f.readlines()
+        r = [re.compile ('.*%s.*' % i.strip()) for i in exclusions]
+        raw = [l for l in raw_output.split ("\n")]
+        return "\n".join ([raw[0]] + [l for l in raw [1:-1] if not any ([x.match (l) for x in r])] + [raw [-1]])
+
 def transmission (cmd):
     cmd = '%s %s %s' % (web.ctx.HOST, web.ctx.TRANS, cmd)
     try:
-        return subprocess.check_output (cmd, shell=True)
+        return hide_lines_if_needed (subprocess.check_output (cmd, shell=True))
     except subprocess.CalledProcessError:
         traceback.print_exc()
         return 'Error executing command.'
@@ -168,27 +181,33 @@ greatest asset its simplicity, folks.
         web.ctx.HOST = HOST
         web.ctx.TRANS = TRANS
         web.ctx.CSS_REF = external_css_ref
+        web.ctx.EXCLUSION_LIST_FILE = TORRENT_EXCLUSION_LIST
         return handler ()
 
     return g
 
-if __name__ == '__main__':
+def main ():
+    global HOST, external_css_ref, TORRENT_EXCLUSION_LIST
 
-    global HOST, external_css_ref
-    import sys
-
-    if len (sys.argv) != 3:
-        sys.stderr.write ('usage: APP port config')
-        sys.exit (-1)
+    if len (sys.argv) < 3:
+        sys.stderr.write ('usage: APP port config [exclusion_list]')
+        sys.exit (1)
 
     conn = None
     cred = ()
+    conf_path = sys.argv [2]
 
-    with (open (sys.argv [2])) as f:
+    with (open (conf_path)) as f:
         l = f.readlines()
         conn = l[0].strip()
         cred = tuple ([x.strip() for x in l[1].split ('/')])
         external_css_ref = l[2].strip()
+
+    if sys.argv[3]:
+        TORRENT_EXCLUSION_LIST = os.path.expanduser (sys.argv[3].strip ())
+        if not os.path.exists (TORRENT_EXCLUSION_LIST):
+            print 'Exclusion path list does not exits at specified path %s' % TORRENT_EXCLUSION_LIST
+            sys.exit (1)
 
     HOST = 'ssh %s' % conn
 
@@ -196,3 +215,6 @@ if __name__ == '__main__':
     app.add_processor (gen_set_globals())
 
     app.run()
+
+if __name__ == '__main__':
+    main ()
