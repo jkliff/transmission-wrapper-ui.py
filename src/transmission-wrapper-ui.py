@@ -102,8 +102,8 @@ def normalize_shell_command (s):
 def render (status):
     return TEMPLATE % {'list': status, 'now': datetime.datetime.now(), 'CSS_REF': web.ctx.CSS_REF}
 
-def hide_lines_if_needed (raw_output):
-    if not os.path.exists (web.ctx.EXCLUSION_LIST_FILE):
+def hide_lines_if_needed (raw_output, allow_raw=False):
+    if allow_raw or not os.path.exists (web.ctx.EXCLUSION_LIST_FILE):
         return raw_output
 
     with (open (web.ctx.EXCLUSION_LIST_FILE)) as f:
@@ -115,7 +115,7 @@ def hide_lines_if_needed (raw_output):
 def transmission (cmd):
     cmd = '%s %s %s' % (web.ctx.HOST, web.ctx.TRANS, cmd)
     try:
-        return hide_lines_if_needed (subprocess.check_output (cmd, shell=True))
+        return subprocess.check_output (cmd, shell=True)
     except subprocess.CalledProcessError:
         traceback.print_exc()
         return 'Error executing command.'
@@ -124,10 +124,10 @@ def e (c, url):
     for u in url.split (','):
         _ (c % u.strip())
 
-_ = lambda x: render (transmission(x))
+_ = lambda x, allow_raw=False: render (hide_lines_if_needed (transmission(x), allow_raw=allow_raw))
 
 def status ():
-    return _ ('-l')
+    return _ ('-l', allow_raw=('raw' in web.input(url=None)))
 
 def add ():
     url = web.input(url=None)['url']
